@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taoufik Medouany</title>
+    <meta name="description" content="Taoufik Medouany, Full-stack Web Developer.">
+  
+    <meta property="og:title"       content="Taoufik Medouany">
+    <meta property="og:description" content="Taoufik Medouany, Full-stack Web Developer.">
+    <meta property="og:image"       content="images/me.jpg">
+    <meta property="og:type"        content="website">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.1/dist/alpine.min.js" defer></script>
+</head>
+<body class="h-screen w-screen flex flex-col justify-center items-center bg-gray-700 overflow-hidden py-6 px-2">
+    <div x-data="terminal()" :class="{ 'max-w-3xl max-h-96': !isFullscreen }" class="w-full mx-auto shadow-2xl subpixel-antialiased rounded h-96 border-black z-50" style="height: 95%;">
+        <div class="flex items-center h-8 rounded-t bg-gray-100 border-b border-gray-500 text-center text-black">
+            <div class="ml-2 border-red-900 bg-red-500 shadow-inner rounded-full w-4 h-4" id="closebtn"></div>
+            <div class="ml-2 border-yellow-900 bg-yellow-500 shadow-inner rounded-full w-4 h-4" id="minbtn"></div>
+            <div class="ml-2 border-green-900 bg-green-500 shadow-inner rounded-full w-4 h-4 cursor-pointer" @click="toggleFullscreen"></div>
+            <div class="mx-auto pr-20" id="terminaltitle">
+                <p class="text-center">taoufikmedouany cli</p>
+            </div>
+        </div>
+        <div x-ref="console"  @click="handleFocus" class="p-2 text-gray-200 font-mono bg-black overflow-x-hidden overflow-y-auto rounded-b" style="height: calc(100% - 32px);">
+            <div class="my-2">Hi there 👋 you're in taoufikmedouany's cli! type `help` to get started.</div>
+            <template x-for="(command, index, collection) in commands" :key="index">
+                <div class="my-3">
+                    <div class="flex">
+                        <div class="text-green-200" x-text="collection[index].directory"></div>
+                        <div class="text-red-500 px-2">$</div>
+                        <div x-text="collection[index].command"></div>
+                    </div>
+                    <div x-html="collection[index].result"></div>
+                </div>
+            </template>
+            <div class="mt-2 mb-6 flex">
+                <div class="text-green-200" x-text="directory"></div>
+                <div class="text-red-500 px-2">$</div>
+                <div class="flex-grow">
+                    <input x-ref="terminalInput" x-on:keydown.enter="runCommand" type="text" name="command" class="bg-transparent w-full" autofocus>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-2 text-gray-400 text-center absolute bottom-0">
+        <div>Made with 💗 by <a class="hover:text-gray-200" href="https://taoufikmedouany.github.io/" target="_blank">Taoufik Medouany</a> © 2021.</div>
+    </footer>
+
+    <script>
+        function terminal() {
+            return {
+                isFullscreen: false,
+
+                commands: [],
+                command: '',
+                directory: 'taoufikmedouany',
+                pages: ['about', 'contact'],
+
+                toggleFullscreen() { this.isFullscreen = !this.isFullscreen },
+                handleFocus() { this.$refs.terminalInput.focus() },
+
+                runCommand(e) {
+                    const input = e.target.value.trim().split(' ');
+                    const cmd = input[0];
+                    const arg = input[1];
+                    if (cmd == '') {
+                        // show error (empty command)
+                    } else if (cmd == 'cat') {
+                        var page = arg.replace(".txt", "");
+                        if (page) {
+                            if (this.pages.includes(page)) {
+                                this.showFile(page);
+                            } else {
+                                this.commands.push({
+                                    command: input.join(' '),
+                                    directory: this.directory,
+                                    result: 'Error: not a valid file'
+                                });
+                            }
+                        } else {
+                            this.commands.push({
+                                command: input.join(' '),
+                                directory: this.directory,
+                                result: 'Error: you did not specify a file'
+                            });
+                        }
+                    // } else if (cmd == 'cd') {
+                    //     this.runCd();
+                    } else if (cmd == 'ls') {
+                        this.runLs();
+                    } else if (cmd == 'history') {
+                        this.runHistory();
+                    } else if (cmd == 'clear') {
+                        this.runClear();
+                    } else if (cmd == 'help') {
+                        this.commands.push({
+                            command: 'help',
+                            directory: this.directory,
+                            result: `
+                                <div>
+                                    <ul class="ml-12">
+                                        <li><b>cat <span class="text-yellow-500">FILENAME</span></b> - display <span class="text-yellow-500">FILENAME</span></li>
+                                        <li><b>ls</b> - show files in current directory</li>
+                                        <li><b>history</b> - see your command history</li>
+                                        <li><b>clear</b> - clear current window</li>
+                                    </ul>
+                                </div>`
+                        });
+                    } else {
+                        // Show error
+                        this.commands.push({
+                            command: input.join(' '),
+                            directory: this.directory,
+                            result: 'Error: command not recognized'
+                        });
+                    }
+                    // clear input
+                    this.$refs.terminalInput.value = '';
+                    // scroll down
+                    this.$nextTick(() => { this.$refs.console.scrollTop = this.$refs.console.scrollHeight });
+                },
+                runClear() {
+                    this.commands = [];
+                },
+                runHistory() {
+                    this.commands.push({
+                        command: 'history',
+                        directory: this.directory,
+                        result: this.commands.map(c => c.command).join('<br />')
+                    });
+                },
+                runLs() {
+                    this.commands.push({
+                        command: 'ls',
+                        directory: this.directory,
+                        result: this.pages.map(page => '<span class="mr-16">'+page+'.txt</span>').join('')
+                    });
+                },
+                // runCd() {},
+                showFile(page) {
+                    fetch('pages/'+page+'.html')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('File Not Found!!')
+                            }
+                            return response.text();
+                        })
+                        .then(html => {
+                            this.commands.push({
+                                command: 'cat '+page+'.txt',
+                                directory: this.directory,
+                                result: html
+                            });
+                        })
+                        .catch((err) => {
+                            this.commands.push({
+                                command: 'cat '+page+'.txt',
+                                directory: this.directory,
+                                result: err
+                            });
+                        });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
